@@ -7,14 +7,13 @@ import torch
 import torch.nn as nn
 
 from models.backbone import CSPDarknet
-# from models.neck.yolo_fpn import YOLOXPAFPN
+from models.neck.yolo_fpn import YOLOXPAFPN
 # from models.head.yolo_head import YOLOXHead
 # from models.losses import YOLOXLoss
-from models.post_process import yolox_post_process
+# from models.post_process import yolox_post_process
 from models.ops import fuse_model
-from data.data_augment import preproc
+from data_augment import preproc
 from utils.model_utils import load_model
-from utils.util import sync_time
 
 
 def get_model(opt):

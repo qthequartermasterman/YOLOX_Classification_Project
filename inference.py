@@ -7,6 +7,7 @@ from torch import nn
 
 from data_augment import preproc
 from models.backbone import CSPDarknet
+from models.neck.yolo_fpn import YOLOXPAFPN
 
 
 class dotdict(dict):
@@ -31,6 +32,7 @@ opt.use_amp = False  # True, Automatic mixed precision
 class IdentityModule(nn.Module):
     def forward(self, x):
         return x
+
     def init_weights(self):
         for m in self.modules():
             if isinstance(m, nn.BatchNorm2d):
@@ -49,8 +51,8 @@ def get_model(opt):
     depth, width = backbone_cfg[opt.backbone.split("-")[1]]  # "CSPDarknet-s"
     in_channel = [256, 512, 1024]
     backbone = CSPDarknet(dep_mul=depth, wid_mul=width, out_indices=(3, 4, 5), depthwise=opt.depth_wise)
-    # # define neck
-    # neck = YOLOXPAFPN(depth=depth, width=width, in_channels=in_channel, depthwise=opt.depth_wise)
+    # define neck
+    neck = YOLOXPAFPN(depth=depth, width=width, in_channels=in_channel, depthwise=opt.depth_wise)
     # # define head
     # head = YOLOXHead(num_classes=opt.num_classes, reid_dim=opt.reid_dim, width=width, in_channels=in_channel,
     #                  depthwise=opt.depth_wise)
@@ -58,7 +60,6 @@ def get_model(opt):
     # loss = YOLOXLoss(opt.label_name, reid_dim=opt.reid_dim, id_nums=opt.tracking_id_nums, strides=opt.stride,
     #                  in_channels=in_channel)
 
-    neck = IdentityModule()
     head = IdentityModule()
     loss = IdentityModule()
 
