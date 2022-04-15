@@ -1,6 +1,5 @@
 """Adapted from https://github.com/zhangming8/yolox-pytorch"""
 
-
 import time
 import numpy as np
 import torch
@@ -16,7 +15,18 @@ from data_augment import preproc
 from utils.model_utils import load_model
 
 
-def get_model(opt):
+class IdentityModule(nn.Module):
+    def forward(self, x):
+        return x
+
+    def init_weights(self):
+        for m in self.modules():
+            if isinstance(m, nn.BatchNorm2d):
+                m.eps = 1e-3
+                m.momentum = 0.03
+
+
+def get_model(opt, head=None):
     # define backbone
     backbone_cfg = {"nano": [0.33, 0.25],
                     "tiny": [0.33, 0.375],
@@ -24,17 +34,21 @@ def get_model(opt):
                     "m": [0.67, 0.75],
                     "l": [1.0, 1.0],
                     "x": [1.33, 1.25]}
-    depth, width = backbone_cfg[opt.backbone.split("-")[1]]  # "CSPDarknet-s
+    depth, width = backbone_cfg[opt.backbone.split("-")[1]]  # "CSPDarknet-s"
     in_channel = [256, 512, 1024]
     backbone = CSPDarknet(dep_mul=depth, wid_mul=width, out_indices=(3, 4, 5), depthwise=opt.depth_wise)
     # define neck
     neck = YOLOXPAFPN(depth=depth, width=width, in_channels=in_channel, depthwise=opt.depth_wise)
-    # define head
-    head = YOLOXHead(num_classes=opt.num_classes, reid_dim=opt.reid_dim, width=width, in_channels=in_channel,
-                     depthwise=opt.depth_wise)
-    # define loss
-    loss = YOLOXLoss(opt.label_name, reid_dim=opt.reid_dim, id_nums=opt.tracking_id_nums, strides=opt.stride,
-                     in_channels=in_channel)
+    # # define head
+    # head = YOLOXHead(num_classes=opt.num_classes, reid_dim=opt.reid_dim, width=width, in_channels=in_channel,
+    #                  depthwise=opt.depth_wise)
+    # # define loss
+    # loss = YOLOXLoss(opt.label_name, reid_dim=opt.reid_dim, id_nums=opt.tracking_id_nums, strides=opt.stride,
+    #                  in_channels=in_channel)
+
+    head = head or IdentityModule()
+    loss = IdentityModule()
+
     # define network
     model = YOLOX(opt, backbone=backbone, neck=neck, head=head, loss=loss)
     return model
@@ -55,27 +69,17 @@ class YOLOX(nn.Module):
 
     def forward(self, inputs, targets=None, show_time=False):
         with torch.cuda.amp.autocast(enabled=self.opt.use_amp):
-            if show_time:
-                s1 = sync_time(inputs)
-
             body_feats = self.backbone(inputs)
             neck_feats = self.neck(body_feats)
             yolo_outputs = self.head(neck_feats)
             # print('yolo_outputs:', [[i.shape, i.dtype, i.device] for i in yolo_outputs])  # float16 when use_amp=True
-
-            if show_time:
-                s2 = sync_time(inputs)
-                print("[inference] batch={} time: {}s".format("x".join([str(i) for i in inputs.shape]), s2 - s1))
 
             if targets is not None:
                 loss = self.loss(yolo_outputs, targets)
                 # for k, v in loss.items():
                 #     print(k, v, v.dtype, v.device)  # always float32
 
-        if targets is not None:
-            return yolo_outputs, loss
-        else:
-            return yolo_outputs
+        return (yolo_outputs, loss) if targets is not None else yolo_outputs
 
 
 class Detector(object):
