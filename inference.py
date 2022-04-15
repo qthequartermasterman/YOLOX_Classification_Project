@@ -8,6 +8,7 @@ from torch import nn
 from data_augment import preproc
 from models.backbone import CSPDarknet
 from models.neck.yolo_fpn import YOLOXPAFPN
+from utils.model_utils import load_model
 
 
 class dotdict(dict):
@@ -97,6 +98,7 @@ class YOLOX(nn.Module):
 
 
 model = get_model(opt)
+model = load_model(model, 'yolox-nano.pth')
 
 # Load Images
 img_dir = 'imgs/'
