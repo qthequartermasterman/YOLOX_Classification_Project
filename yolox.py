@@ -51,6 +51,7 @@ def get_model(opt, head=None):
 
     # define network
     model = YOLOX(opt, backbone=backbone, neck=neck, head=head, loss=loss)
+    model = load_model(model, 'yolox-nano.pth')
     return model
 
 
