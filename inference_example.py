@@ -5,8 +5,8 @@ import numpy as np
 import torch
 from torch import nn
 
-from data_augment import preproc
-from yolox import YOLOX, get_model
+from yolox.data_augment import preproc
+from yolox.yolox import YOLOX, get_model
 
 
 # Load model

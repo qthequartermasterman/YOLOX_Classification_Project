@@ -11,8 +11,8 @@ from models.neck.yolo_fpn import YOLOXPAFPN
 # from models.losses import YOLOXLoss
 # from models.post_process import yolox_post_process
 from models.ops import fuse_model
-from data_augment import preproc
-from utils.model_utils import load_model
+from .data_augment import preproc
+from .utils.model_utils import load_model
 
 
 class IdentityModule(nn.Module):
@@ -51,7 +51,7 @@ def get_model(opt, head=None):
 
     # define network
     model = YOLOX(opt, backbone=backbone, neck=neck, head=head, loss=loss)
-    model = load_model(model, 'yolox-nano.pth')
+    model = load_model(model, 'pretrained_models/yolox-nano.pth')
     return model
 
 
