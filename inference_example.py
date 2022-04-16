@@ -44,9 +44,9 @@ for b_i, image in enumerate(images):
     img, r = preproc(image, opt.test_size, opt.rgb_means, opt.std)
     inp_imgs[b_i] = img
 
+inp_imgs = torch.from_numpy(inp_imgs).to(opt.device)
 
 with torch.no_grad():
-    inp_imgs = torch.from_numpy(inp_imgs).to(opt.device)
     yolo_outputs = model(inp_imgs)
     # print(yolo_outputs)
     print(len(yolo_outputs))
