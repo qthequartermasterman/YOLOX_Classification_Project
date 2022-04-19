@@ -1,6 +1,8 @@
 """Adapted from https://github.com/zhangming8/yolox-pytorch"""
 
 import time
+from typing import Optional
+
 import numpy as np
 import torch
 import torch.nn as nn
@@ -26,7 +28,19 @@ class IdentityModule(nn.Module):
                 m.momentum = 0.03
 
 
-def get_model(opt, head=None):
+def get_model(opt,
+              head: nn.Module = None,
+              freeze_layers: bool = True,
+              use_pretrained: Optional[str] = 'pretrained_models/yolox-nano.pth'):
+    """
+    Create a custom YOLOX-inspired network with the given options (configuration), head network, and determining whether
+    early layers should be frozen/pretrained
+    :param opt: dotdict with the necessary configurations
+    :param head: nn.Module (network) that will take the YOLOX neck output and turn that into the appropriate task
+    :param freeze_layers: True if early layers should be frozen for transfer learning
+    :param use_pretrained: str pointing to a pretrained model weight or None
+    :return:
+    """
     # define backbone
     backbone_cfg = {"nano": [0.33, 0.25],
                     "tiny": [0.33, 0.375],
@@ -51,7 +65,17 @@ def get_model(opt, head=None):
 
     # define network
     model = YOLOX(opt, backbone=backbone, neck=neck, head=head, loss=loss)
-    model = load_model(model, 'pretrained_models/yolox-nano.pth')
+
+    # Load network
+    if use_pretrained:
+        model = load_model(model, use_pretrained)
+
+    # Freeze Layers
+    if freeze_layers:
+        for p in model.backbone.parameters():
+            p.requires_grad = False
+        for p in model.neck.parameters():
+            p.requires_grad = False
     return model
 
 
