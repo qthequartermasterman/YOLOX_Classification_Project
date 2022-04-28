@@ -18,7 +18,7 @@ def clip_grads(model, grad_clip=dict(max_norm=35, norm_type=2)):
         print("cannot find parameters in model.parameters(), no clipping grad")
 
 
-def load_model(model, model_path, optimizer=None, scaler=None, resume=False):
+def load_model(model, model_path, optimizer=None, scaler=None, resume=False, verbose=False):
     assert os.path.isfile(model_path), "model {} not find".format(model_path)
     checkpoint = torch.load(model_path, map_location=lambda storage, loc: storage)
     print('==>> loaded {}, epoch {}'.format(model_path, checkpoint['epoch']))
@@ -38,14 +38,17 @@ def load_model(model, model_path, optimizer=None, scaler=None, resume=False):
     for k in state_dict:
         if k in model_state_dict:
             if state_dict[k].shape != model_state_dict[k].shape:
-                print('--> Skip loading parameter {}, required shape {}, loaded shape{}.'.format(
-                    k, model_state_dict[k].shape, state_dict[k].shape))
+                if verbose:
+                    print('--> Skip loading parameter {}, required shape {}, loaded shape{}.'.format(
+                        k, model_state_dict[k].shape, state_dict[k].shape))
                 state_dict[k] = model_state_dict[k]
         else:
-            print('--> Drop parameter {}.'.format(k))
+            if verbose:
+                print('--> Drop parameter {}.'.format(k))
     for k in model_state_dict:
         if not (k in state_dict):
-            print('No param {}.'.format(k))
+            if verbose:
+                print('No param {}.'.format(k))
             state_dict[k] = model_state_dict[k]
     # for index, (k, v) in enumerate(state_dict.items()):
     #    print("Load pretrained weights: {}, {}, {}".format(index, k, v.size()))
