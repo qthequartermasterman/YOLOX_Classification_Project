@@ -3,3 +3,8 @@ numpy
 pandas
 torch
 mediapipe
+mmcv
+scikit-learn
+skorch
+seaborn
+altair
